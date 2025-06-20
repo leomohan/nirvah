@@ -52,3 +52,18 @@ async function startTrace() {
   const hops = await simulateTrace(target);
   plotHops(hops);
 }
+// Add to traceroute.js
+async function runPing(target) {
+  const response = await fetch(`/ping?host=${target}`); // Requires backend
+  return await response.json(); // {min: 12, max: 45, avg: 28, loss: 0}
+}
+
+function updatePingStats(data) {
+  const statsBox = document.createElement('div');
+  statsBox.innerHTML = `
+    <h3>Ping Statistics for ${target}</h3>
+    <p>Min: ${data.min}ms | Max: ${data.max}ms</p>
+    <p>Avg: ${data.avg}ms | Loss: ${data.loss}%</p>
+  `;
+  document.getElementById('controls').appendChild(statsBox);
+}
