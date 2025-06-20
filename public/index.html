@@ -11,13 +11,41 @@
       background: rgba(0,0,0,0.7); padding: 10px; color: white;
     }
   </style>
+
+   
+
+<script>
+  // Ensure globals are available
+  window.startTrace = async function() {
+    const target = document.getElementById('target').value;
+    try {
+      const hops = await simulateTrace(target);
+      plotHops(hops);
+      
+      // Optional: Uncomment when ready
+      // const pingData = await runPing(target);
+      // updatePingStats(pingData);
+      
+      console.log("Trace completed!", hops);
+    } catch (error) {
+      console.error("Trace failed:", error);
+      alert("Trace failed. Check console for details.");
+    }
+  };
+
+  // Initialize globe on load
+  document.addEventListener('DOMContentLoaded', () => {
+    initGlobe();
+    document.getElementById('trace-btn').onclick = startTrace;
+  });
+</script>
 </head>
 <body>
   <div id="globe-container"></div>
   <div id="controls">
     <h2>Nirvāh</h2>
     <input type="text" id="target" placeholder="Enter IP/Domain" value="example.com">
-    <button onclick="startTrace()">Trace</button>
+   <button id="trace-btn">Trace</button>
   </div>
 
   <!-- Three.js -->
@@ -25,5 +53,6 @@
   <!-- Our code -->
   <script src="js/globe.js"></script>  <!-- For Three.js setup -->
   <script src="js/traceroute.js"></script> <!-- For trace logic -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </body>
 </html>
