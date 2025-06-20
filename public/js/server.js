@@ -1,17 +1,23 @@
 const express = require('express');
 const { exec } = require('child_process');
 const app = express();
+const cors = require('cors');
 
-app.get('/ping', (req, res) => {
-  exec(`ping -c 4 ${req.query.host}`, (err, stdout) => {
-    const stats = parsePingOutput(stdout); // Implement parsing
-    res.json(stats);
+app.use(cors());
+
+app.get('/trace', (req, res) => {
+  exec(`traceroute -n ${req.query.host}`, (error, stdout) => {
+    const hops = parseTraceOutput(stdout); // Implement parsing
+    res.json(hops);
   });
 });
 
-function parsePingOutput(text) {
-  // Extract min/max/avg/loss from ping output
-  return { min: 12, max: 45, avg: 28, loss: 0 }; // Example
+function parseTraceOutput(text) {
+  // Extract IPs and ping times from traceroute output
+  return [
+    {ip: "192.168.1.1", lat: 37.5, lng: -122.3, name: "Router", avgLatency: 12},
+    // ...real hop data
+  ];
 }
 
-app.listen(3000, () => console.log('Nirvāh backend running!'));
+app.listen(3000, () => console.log('Traceroute API running on port 3000'));
