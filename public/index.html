@@ -3,80 +3,98 @@
 <head>
   <meta charset="UTF-8">
   <title>Nirvāh Network Visualizer</title>
-  <!-- CSS -->
-  <link rel="stylesheet" href="/public/css/style.css">
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
-  <!-- Three.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <!-- Three.js Addons -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <div id="hop-tooltip" style="position:absolute; background:rgba(0,0,0,0.8); padding:8px; color:white; border-radius:4px; display:none;"></div>
+
+<script>
+  // Add to globe.js after init
+  renderer.domElement.addEventListener('mousemove', (event) => {
+    const mouse = new THREE.Vector2(
+      (event.clientX / window.innerWidth) * 2 - 1,
+      -(event.clientY / window.innerHeight) * 2 + 1
+    );
+    
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, camera);
+    
+    const intersects = raycaster.intersectObjects(currentMarkers);
+    if (intersects.length > 0) {
+      const hop = intersects[0].object.userData.info;
+      const tooltip = document.getElementById('hop-tooltip');
+      tooltip.style.display = 'block';
+      tooltip.style.left = `${event.clientX + 10}px`;
+      tooltip.style.top = `${event.clientY + 10}px`;
+      tooltip.innerHTML = `
+        <strong>${hop.name}</strong><br>
+        IP: ${hop.ip}<br>
+        Latency: ${hop.avgLatency || '--'}ms
+      `;
+    }
+  });
+</script>
+  <style>
+    body { 
+      margin: 0; 
+      overflow: hidden; 
+      font-family: Arial, sans-serif;
+    }
+    #globe-container { 
+      width: 100%; 
+      height: 100vh; 
+    }
+    #controls {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    input, button {
+      padding: 8px 12px;
+      margin: 5px 0;
+      border: none;
+      border-radius: 4px;
+    }
+    button {
+      background: #4fc3f7;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-  <!-- Globe Container -->
   <div id="globe-container"></div>
   
-  <!-- Control Panel -->
   <div id="controls">
-    <h2><i class="fas fa-globe-asia"></i> Nirvāh</h2>
+    <h2>Nirvāh</h2>
     <input type="text" id="target" placeholder="e.g. google.com" value="8.8.8.8">
-    <button id="trace-btn">
-      <i class="fas fa-satellite-dish"></i> Trace Route
-    </button>
-    <div id="ping-stats"></div>
+    <button id="trace-btn">Trace Route</button>
+    <div id="debug-status"></div>
   </div>
 
-  <!-- Debug Overlay (visible only during development) -->
-  <div id="debug" style="position:absolute; bottom:10px; left:10px; color:white; background:rgba(0,0,0,0.5); padding:5px; font-family:monospace; display:none;">
-    <div>Three.js v<span id="three-version"></span></div>
-    <div>Status: <span id="status">Initializing...</span></div>
-  </div>
-
-  <!-- JavaScript Files -->
-  <script src="/public/js/globe.js"></script>
-  <script src="/public/js/traceroute.js"></script>
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   
-  <!-- Font Awesome -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  <!-- Our Files -->
+  <script src="js/globe.js"></script>
+  <script src="js/traceroute.js"></script>
   
   <!-- Main Initialization -->
+   <script type="module">
+  import { plotHops } from '/js/traceroute.js';
+  window.plotHops = plotHops; // Explicit exposure
+</script>
+
   <script>
-    // Debug mode - set to false for production
-    const DEBUG_MODE = true;
-    
-    document.addEventListener('DOMContentLoaded', () => {
-      // Show Three.js version
-      document.getElementById('three-version').textContent = THREE.REVISION;
-      
-      // Initialize globe
-      initGlobe();
-      
-      // Setup trace button
-      document.getElementById('trace-btn').addEventListener('click', async () => {
-        const target = document.getElementById('target').value.trim();
-        if (!target) {
-          alert("Please enter a target host/IP");
-          return;
-        }
-        
-        if (DEBUG_MODE) {
-          document.getElementById('status').textContent = `Tracing ${target}...`;
-          document.getElementById('debug').style.display = 'block';
-        }
-        
-        try {
-          await startTrace(target);
-          document.getElementById('status').textContent = "Trace completed!";
-        } catch (error) {
-          console.error("Trace error:", error);
-          document.getElementById('status').textContent = "Trace failed!";
-        }
-      });
-      
-      if (DEBUG_MODE) {
-        console.log("System initialized");
-        document.getElementById('debug').style.display = 'block';
-      }
+    document.getElementById('trace-btn').addEventListener('click', () => {
+      const target = document.getElementById('target').value;
+      startTrace(target)
+        .then(hops => {
+          document.getElementById('debug-status').textContent = 
+            `Showing ${hops.length} hops`;
+        })
+        .catch(console.error);
     });
   </script>
 </body>
