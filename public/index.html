@@ -2,57 +2,82 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Nirvāh - Network Path Visualizer</title>
-  <style>
-    body { margin: 0; overflow: hidden; font-family: Arial, sans-serif; }
-    #globe-container { position: absolute; width: 100%; height: 100%; }
-    #controls {
-      position: absolute; top: 20px; left: 20px; 
-      background: rgba(0,0,0,0.7); padding: 10px; color: white;
-    }
-  </style>
-
-   
-
-<script>
-  // Ensure globals are available
-  window.startTrace = async function() {
-    const target = document.getElementById('target').value;
-    try {
-      const hops = await simulateTrace(target);
-      plotHops(hops);
-      
-      // Optional: Uncomment when ready
-      // const pingData = await runPing(target);
-      // updatePingStats(pingData);
-      
-      console.log("Trace completed!", hops);
-    } catch (error) {
-      console.error("Trace failed:", error);
-      alert("Trace failed. Check console for details.");
-    }
-  };
-
-  // Initialize globe on load
-  document.addEventListener('DOMContentLoaded', () => {
-    initGlobe();
-    document.getElementById('trace-btn').onclick = startTrace;
-  });
-</script>
-</head>
-<body>
-  <div id="globe-container"></div>
-  <div id="controls">
-    <h2>Nirvāh</h2>
-    <input type="text" id="target" placeholder="Enter IP/Domain" value="example.com">
-   <button id="trace-btn">Trace</button>
-  </div>
-
+  <title>Nirvāh Network Visualizer</title>
+  <!-- CSS -->
+  <link rel="stylesheet" href="/public/css/style.css">
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
   <!-- Three.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <!-- Our code -->
-  <script src="js/globe.js"></script>  <!-- For Three.js setup -->
-  <script src="js/traceroute.js"></script> <!-- For trace logic -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Three.js Addons -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+  <!-- Globe Container -->
+  <div id="globe-container"></div>
+  
+  <!-- Control Panel -->
+  <div id="controls">
+    <h2><i class="fas fa-globe-asia"></i> Nirvāh</h2>
+    <input type="text" id="target" placeholder="e.g. google.com" value="8.8.8.8">
+    <button id="trace-btn">
+      <i class="fas fa-satellite-dish"></i> Trace Route
+    </button>
+    <div id="ping-stats"></div>
+  </div>
+
+  <!-- Debug Overlay (visible only during development) -->
+  <div id="debug" style="position:absolute; bottom:10px; left:10px; color:white; background:rgba(0,0,0,0.5); padding:5px; font-family:monospace; display:none;">
+    <div>Three.js v<span id="three-version"></span></div>
+    <div>Status: <span id="status">Initializing...</span></div>
+  </div>
+
+  <!-- JavaScript Files -->
+  <script src="/public/js/globe.js"></script>
+  <script src="/public/js/traceroute.js"></script>
+  
+  <!-- Font Awesome -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+  
+  <!-- Main Initialization -->
+  <script>
+    // Debug mode - set to false for production
+    const DEBUG_MODE = true;
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      // Show Three.js version
+      document.getElementById('three-version').textContent = THREE.REVISION;
+      
+      // Initialize globe
+      initGlobe();
+      
+      // Setup trace button
+      document.getElementById('trace-btn').addEventListener('click', async () => {
+        const target = document.getElementById('target').value.trim();
+        if (!target) {
+          alert("Please enter a target host/IP");
+          return;
+        }
+        
+        if (DEBUG_MODE) {
+          document.getElementById('status').textContent = `Tracing ${target}...`;
+          document.getElementById('debug').style.display = 'block';
+        }
+        
+        try {
+          await startTrace(target);
+          document.getElementById('status').textContent = "Trace completed!";
+        } catch (error) {
+          console.error("Trace error:", error);
+          document.getElementById('status').textContent = "Trace failed!";
+        }
+      });
+      
+      if (DEBUG_MODE) {
+        console.log("System initialized");
+        document.getElementById('debug').style.display = 'block';
+      }
+    });
+  </script>
 </body>
 </html>
