@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Nirvāh Network Visualizer</title>
+  <div id="hop-tooltip" style="position:absolute; background:rgba(0,0,0,0.8); padding:8px; color:white; border-radius:4px; display:none;"></div>
+
+<script>
+  // Add to globe.js after init
+  renderer.domElement.addEventListener('mousemove', (event) => {
+    const mouse = new THREE.Vector2(
+      (event.clientX / window.innerWidth) * 2 - 1,
+      -(event.clientY / window.innerHeight) * 2 + 1
+    );
+    
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, camera);
+    
+    const intersects = raycaster.intersectObjects(currentMarkers);
+    if (intersects.length > 0) {
+      const hop = intersects[0].object.userData.info;
+      const tooltip = document.getElementById('hop-tooltip');
+      tooltip.style.display = 'block';
+      tooltip.style.left = `${event.clientX + 10}px`;
+      tooltip.style.top = `${event.clientY + 10}px`;
+      tooltip.innerHTML = `
+        <strong>${hop.name}</strong><br>
+        IP: ${hop.ip}<br>
+        Latency: ${hop.avgLatency || '--'}ms
+      `;
+    }
+  });
+</script>
+  <style>
+    body { 
+      margin: 0; 
+      overflow: hidden; 
+      font-family: Arial, sans-serif;
+    }
+    #globe-container { 
+      width: 100%; 
+      height: 100vh; 
+    }
+    #controls {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    input, button {
+      padding: 8px 12px;
+      margin: 5px 0;
+      border: none;
+      border-radius: 4px;
+    }
+    button {
+      background: #4fc3f7;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="globe-container"></div>
+  
+  <div id="controls">
+    <h2>Nirvāh</h2>
+    <input type="text" id="target" placeholder="e.g. google.com" value="8.8.8.8">
+    <button id="trace-btn">Trace Route</button>
+    <!-- Add this toggle button next to your trace button -->
+<button id="view-toggle">Switch to 2D Map</button>
+    <div id="debug-status"></div>
+  </div>
+
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  
+  <!-- Our Files -->
+  <script src="js/globe.js"></script>
+  <script src="js/traceroute.js"></script>
+  
+  <!-- Main Initialization -->
+   <script type="module">
+  import { plotHops } from '/js/traceroute.js';
+  window.plotHops = plotHops; // Explicit exposure
+</script>
+
+  <script>
+    document.getElementById('trace-btn').addEventListener('click', () => {
+      const target = document.getElementById('target').value;
+      startTrace(target)
+        .then(hops => {
+          document.getElementById('debug-status').textContent = 
+            `Showing ${hops.length} hops`;
+        })
+        .catch(console.error);
+    });
+  </script>
+</body>
+</html>
